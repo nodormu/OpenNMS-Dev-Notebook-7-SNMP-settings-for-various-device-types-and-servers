@@ -1,0 +1,160 @@
+You will the IP address of the OpenNMS server.
+SNMP uses UDP ports 161 and 162.
+
+The firewall manager in your LAN Enterprise environment will need the IP of your OpenNMS server, the IPs/IP range/subnets you need to poll, and the port numbers mentioned above.
+Do NOT just say, "all of them"... because this in no way helps your network manager implement effective and secure firewall policy rules whatsoever. 
+You MUST specify IPs/IP ranges/Subnets/etc, otherwise you are being an @ss and could be compromising your entire LAN Enterprise security.
+
+Don't forget to allow UDP 161 and UDP 162 in your IP tables rules otherwise if you have a general DROP policy.
+I dicuss IP tables towards the end of the Dev Notebook 0, which will spell out what you are looking for regarding IP tables rules.
+You only need DROP, and the allowed SSH, and SNMP ports, along with allowing connected states rules, and whatever ports your applications need on the linux server.
+
+You will need to install all needed services, which is also covered in Dev Notebook 0, but this works too, if you want to check. The following command is for debian.
+
+sudo apt-get install snmp* snmpd* -y
+
+For CentOS, or Red Hat, it's this.
+
+sudo yum install snmp* snmpd* -y
+
+Then change directory to /etc/snmp (or it might be /etc/snmpd depending on your version of *nix).
+
+cat your snmpd.conf file.
+
+nms@opennms:/etc/snmp$ sudo cat snmpd.conf 
+
+--or--
+
+nms@opennms:/etc/snmp$ sudo cat snmpd.conf | more
+
+the `| more` is if you can't scroll back up thru the output via the SSH session.
+
+Linux Servers can do SNMPv1, SNMPv2c, and SNMPv3.
+
+Before we get to the settings, look for this section in the snmpd.conf
+
+view   systemonly  included   .1.3.6.1.2.1.1
+view   systemonly  included   .1.3.6.1.2.1.25.1
+
+Comment one of those lines out, and do this to the other as shown below
+
+view   systemonly  included   .1
+#view   systemonly  included   .1.3.6.1.2.1.25.1
+
+That number is an OID. The more defined your OID is in your snmpd.conf file, 
+the more limited and refined your poller(s) on the OpenNMS Server will recieve per the default 5 min polling interval.
+The less numbers (.1) will allow more polling data collection based on the information in Dev Notebook 2 in my github.
+
+Now look for this section:
+#  Listen for connections from the local system only
+agentAddress  udp:127.0.0.1:161
+#  Listen for connections on all interfaces (both IPv4 *and* IPv6)
+#agentAddress udp:161,udp6:[::1]:161
+
+Change 127.0.0.1 to the IP address of your OpenNMS Server.
+Example:
+
+agentAddress udp:192.168.25.50:161
+
+If you are using IPv6, then set it instead of the IPv4 address, and comment out the IPv4 line.
+
+
+
+
+
+This next section addresses SNMPv2c. 
+You will see the SNNPv1 settings as you go through this. 
+There is no reason to use SNMPv1 unless that's your only option.
+---------------------------------------------------------------
+
+Now look for the section in the snmpd.conf file that says:
+
+                                                 #  Default access to basic system info
+ rocommunity public  default    -V systemonly
+                                                 #  rocommunity6 is for IPv6
+ rocommunity6 public  default   -V systemonly
+
+
+Change public to your custom community string based on your preference for IPv4 and/or IPv6.
+
+Below is an example, specified for IPv4. I commented out IPv6, because I'm using IPv6 addresses for this example.
+
+                                                 #  Default access to basic system info
+ rocommunity customcommunitystring  default    -V systemonly
+                                                 #  rocommunity6 is for IPv6
+ #rocommunity6 public  default   -V systemonly
+
+Look for the section that says:
+
+                                    #   send SNMPv1  traps
+ trapsink     localhost public
+                                    #   send SNMPv2c traps
+#trap2sink    localhost public
+                                    #   send SNMPv2c INFORMs
+#informsink   localhost public
+
+Change public to your custom community string, and uncomment the trap2sink line for SNMPv2c, 
+also changing public to your community string there as well.
+
+It should look something like this, but with the IP address of your OpenNMS Server(s) and your custom string.
+Below is just an example.
+
+                                    #   send SNMPv1  traps
+ trapsink     192.168.25.50  customcommunitystring
+                                    #   send SNMPv2c traps
+ trap2sink    192.168.25.50  customcommunitystring
+                                    #   send SNMPv2c INFORMs
+#informsink   localhost public
+
+Save and close the file.
+
+
+
+
+This next section addresses SNMPv3
+----------------------------------
+
+Look for this section:
+
+#  createUser authOnlyUser  MD5 "remember to change this password"
+#  createUser authPrivUser  SHA "remember to change this one too"  DES
+#  createUser internalUser  MD5 "this is only ever used internally, but still change the password"
+
+authOnlyUser, only uses authentication, and the traps are sent in clear text (but encapsulated) to your OpenNMS server.
+authPrivUser, means that the traps will be encrypted when they reach your OpenNMS server.
+
+change authOnlyUser to your SNMPv3 user and set it for your node on the OpenNMS Server.
+If using Privacy, change authPrivUser to the same name as your authOnlyUser and set it on the OpenNMS Server
+In parenthesis where it says "remember to change this password", and "remember to change this one too",
+change those to your authentication and privacy passwords you have chosen, and enter them in the OpenNMS server under the IP of the node.
+Common sense should tell you these passwords do NOT need to be the same.
+Here is an example:
+
+#  createUser authOnlyUser  MD5 "remember to change this password"
+createUser opennmspoller MD5 password
+#  createUser authPrivUser  SHA "remember to change this one too"  DES
+createUser opennmstraps SHA password DES
+#  createUser internalUser  MD5 "this is only ever used internally, but still change the password"
+
+
+Comment out anyline involing SNMPv1 or SNMPv2c and community strings, as they are not used by SNMPv3 when using BOTH authOnlyUser and authPrivUser.
+
+If you are only using authOnlyUser, then trapsink and trap2sink will still need to be uncommented, and you will need to specify a community string, 
+here and in the asset tab of the node in OpenNMS, even if you changed the default community string from testpub to your custom community string.
+
+Save and close the file.
+
+start or restart the snmp service, and enable the service to start on boot. (it's either snmpd or snmp depending on your flavor of linux)
+
+sudo systemctl start snmpd
+sudo systemctl enable snmpd
+
+
+
+
+Closing notes:
+--------------
+The above access is read only.
+Write access is just a bad idea.
+If you need to make changes to a server, just login to the server, or push changes from cloud console in AWS or Azure.
+Using SNMP to make changes via enabling write permissions will work, but is unadvisable unless you have no other way to make such changes.

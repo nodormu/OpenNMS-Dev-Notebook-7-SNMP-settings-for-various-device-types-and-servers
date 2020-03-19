@@ -1,0 +1,43 @@
+Let's talk about SNMP in general first.
+
+You have basically 3 versions in use at this time.
+SNMPv1
+SNMPv2c
+SNMPv3
+
+All versions of SNMP need a polling and trap server IP specified (in this case, both are the OpenNMS monitoring server(s)).
+
+SNMPv1 was obviously the first incarnation, and the data you will be able to retrieve for devices that only have this method is VERY minimal.
+It's to hope that most vendors have at least migrated to SNMPv2c, even though vendors have a tendency to get lazy about updating OIDs within MIB files for making everything human readable.
+
+Both SNMPv1 and SNMPv2c require what is called a community string.
+As I said in the Dev notebook 0, don't use testhub, public or private as these are default.
+Pick something unique and document it in your spreadsheet along with all your devices/IPs that are in monitoring for worst case scenarios.
+
+
+SNMPv3 does NOT use a community string. It uses what is called Authentication and Privacy.
+
+Authentication is a user/pass typically with an MD5 based  message-digets encryption algorithm producing a 128 bit hash value.
+Authentication is the user/pass setup on the device that needs to be monitored, and those credentials setup for the IP of the node in the OpenNMS server.
+Authentication is used for polling only.
+
+Privacy typically uses an encryption algorithm of SHA and is for traps the device sends to the OpenNMS server.
+The OpenNMS server does NOT have to poll the device to receieve traps from it.
+
+Just as with SNMPv1 and SNMPv2c, SNMPv3 can be setup for polling, traps or both depending on your needs.
+
+If you do NOT have a static IP setup for your OpenNMS server, and it's IP changes, the devices you have in monitoring will reject your poll, and your traps will go to the wrong server.
+Just like traps which are one way sourcing from the device to the OpenNMS monitoring server, your NETFLOW and syslog coming from network gear is one way, so set a static IP for your OpenNMS server.
+
+You typically do NOT want to set up SNMP on a workstation because of all of the false positives you can receive.
+For servers that have specific purposes, you should place them in their own provisioning request based on the information you need to poll the device for.
+The polling data comes from the Dev Notebook OpenNMS-Dev-Notebook-2-SNMP-Detection-and-Polling section of my github.
+The event data in this same netbook is what translates OIDs into human readable information for the traps (most of the time).
+
+SNMP uses UDP 161 (default for polling,) and UDP 162 (default for traps).
+
+Be sure to check ANY firewall settings/rules on any software or hardware based firewall that could be dropping your traffic for polling devices, or receiving traps from them.
+
+You may have to open a change/control ticket with your administrator and explain to them what you are doing if your Enterprise has never had a monitoring server before.
+
+

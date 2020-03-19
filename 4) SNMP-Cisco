@@ -1,0 +1,43 @@
+Here are a set of commands for most Cisco IOS based routers, switches and hubs.
+SNMPv3 settings show both options for having both authUser and authPriv user commands.
+
+SNMPv2c settings:
+------------------
+snmp-server community "custom community string" RO
+snmp-server enable traps
+snmp-server host "IP address of OpenNMS server" version 2c "custom community string"
+
+
+
+SNMPv3 settings:
+-----------------
+snmp-server view ViewDefault
+snmp-server group "snmpv3 group name" auth
+snmp-server group "snmpv3 group name" priv
+snmp-server user "authUser name" "snmpv3 group name" auth sha "authUser password" priv aes 128 "privacy password"
+snmp-server host "ip address of OpenNMS server" version 3 auth "authName"
+snmp-server host "ip address of OpenNMS server" version 3 priv "privName"
+
+
+
+
+Cisco Nexus and related storage fiber switches SNMPv3 uses roles because they can be used as groups in SNMP.
+-----------------------------------------------------------------------------------------------------
+snmp-server user "authUser name" network-admin v3 auth sha "authUser password" priv aes 128 "privacy password"
+
+
+
+Cisco ASA Firewalls SNMPv3:
+--------------------------
+snmp-server group "snmpv3 group name" v3 priv
+snmp-server user "authUser name" "snmpv3 group name" v3 auth sha "authUser password" priv aes 128 "privacy password"
+snmp-server host mgmt "ip address of OpenNMS server" version 3 "authUser name"
+
+
+Notes:
+------
+You might have specify an interface or sub interface depending on how your router or switch is configured.
+
+snmp-server trap-source "interface or sub interface goes here"
+
+Also notice that the example in the level of encryption for aes in the SNMPv3 settings is 128. You could also set 192 or 256.

@@ -1,0 +1,17 @@
+Here are some snmpwalk command syntax examples for testing responses.
+
+SNMPv1 and SNMPv2c example:
+---------------------------
+snmpwalk -v 2c -c "custom community string" "IP address of device/server"
+
+
+SNMPv3 example:
+---------------
+snmpwalk -v3 -l authPriv -u "authUser name" -a SHA -A "authUser password" -x AES -X "privacy password" "IP address of device server"
+
+
+Notes:
+------
+If your device doesn't support SHA, then use MD5 for authentication.
+If your device doesn't support AES, then it likely supports DES.
+

@@ -1,2 +1,2 @@
-# OpenNMS-Dev-Notebook-7-SNMP-settings-for-various-device-types-and-servers
-Setting up SNMP for various. Make a request with posted settings if you want more in one place.
+This Dev Notebook will cover how to setup SNMP on various different types of devices.
+If you have any you'd like me to add just so there are more references for more people in one place, let me know what the settings/instructions are, and I'll add it.

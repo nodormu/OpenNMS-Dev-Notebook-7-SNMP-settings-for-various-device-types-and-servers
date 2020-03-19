@@ -1,0 +1,30 @@
+For setting up SNMP on windows servers, you will need to make sure all the SNMP services are installed.
+
+If you can not see all of the SNMP settings I'm talking about in this section of the notebook, then you do NOT have all the services installed.
+Refer to Microsoft Documentation for what services are needed.
+Also... Microsoft Servers do NOT support SNMPv3, but do support SNMPv2c.
+
+Click on the start (windows) button, or get to a search field where you can type:  services.msc
+
+This will take you to the list of services running on your Windows and all of their parameters.
+
+Go to the SNMP Service (NOT the SNMP Trap service. I'll discuss that at the end of this.)
+
+Right click on the SNMP Service, and click on properties.
+
+There is a Security tab. This is for the poller settings.
+Enter your custom community string, and then add the IP address of your OpenNMS server(s).
+If you want a trap sent to OpenNMS everytime an authentication fails, check the box.
+Click apply.
+
+There is a Traps tab. This is for the trap settings.
+Enter your custom community string, then add the IP addres of your OpenNMS server(s).
+Click apply.
+
+Click Ok, then stop and then start the SNMP Service. Don't just click restart. Sometimes there are child processes involved that need to be restarted that don't always necessarily restart when clicking on restart.
+
+Don't forget to check your windows firewall, and/or check with your LAN firewall manager (person), in case UDP port 161 and 162 need to be opened/allowed for the traffic to pass.
+
+The firewall manager in your LAN Enterprise environment will need the IP of your OpenNMS server, the IPs/IP range/subnets you need to poll, and the port numbers mentioned above.
+Do NOT just say, "all of them"... because this in no way helps your network manager implement effective and secure firewall policy rules whatsoever. 
+You MUST specify IPs/IP ranges/Subnets/etc, otherwise you are being an @ss and could be compromising your entire LAN Enterprise security.
